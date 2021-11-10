@@ -23,15 +23,6 @@ public class MyGameManager : MonoBehaviour
 
     private void GetInput()
     {
-        //Start / stop simulation
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
 
-        }
-        //Set fire
-        else if (Input.GetKeyDown(KeyCode.Mouse0))
-        {
-
-        }
     }
 }
