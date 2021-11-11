@@ -152,16 +152,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ab1e52b1856cac419e155e72ad8f12d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellSize: 0
-  fps: 0
-  cellFlamable: {fileID: 0}
-  cellInflamable: {fileID: 0}
-  cellBurning: {fileID: 0}
-  materialBurningSlightly: {fileID: 0}
-  materialBurningNormal: {fileID: 0}
-  materialBurningExtremely: {fileID: 0}
-  materialFlamable: {fileID: 0}
-  materialInflamable: {fileID: 0}
+  fps: 40
+  simulationSpeed: 1
+  cellPrefab: {fileID: 6018641452474890952, guid: 4a4134f77ad21064391b932239933ada, type: 3}
+  cellSize: 1
+  materialFlamable: {fileID: 2100000, guid: e50db2a1b8514a74992951af77c46a11, type: 2}
+  materialInflamable: {fileID: 2100000, guid: efebb674e3a876442b655f4f50616de3, type: 2}
+  materialBurningSlightly: {fileID: 2100000, guid: c696f397f093e31498c2a278c3b8abb5, type: 2}
+  materialBurningNormal: {fileID: 2100000, guid: aa0297a6d2b6d30478bddd308db2666e, type: 2}
+  materialBurningExtremely: {fileID: 2100000, guid: f3ad7f874d7921c40964a0885750babb, type: 2}
+  width: 80
+  height: 45
+  randomlyGenerated: 1
+  fillPercent: 15
+  seedString: randomSeed
 --- !u!4 &107003509
 Transform:
   m_ObjectHideFlags: 0

@@ -29,7 +29,7 @@ public class Cell : MonoBehaviour
         rend = this.gameObject.GetComponent<Renderer>();
     }
 
-    private void AssignCell(CellularAutomata _cellularAutomata, Material _materialInflamable, Material _materialFlamable, Material _materialBurningSlightly, Material _materialBurningNormal, Material _materialBurningExtremly, int idxX, int idxY, Action<Vector2Int, bool> _callback, bool _flamable, bool _burning)
+    public void AssignCell(CellularAutomata _cellularAutomata, Material _materialInflamable, Material _materialFlamable, Material _materialBurningSlightly, Material _materialBurningNormal, Material _materialBurningExtremly, int idxX, int idxY, Action<Vector2Int, bool> _callback, bool _flamable)
     {
         cellularAutomata = _cellularAutomata;
         materialInflamable = _materialInflamable;
@@ -40,28 +40,15 @@ public class Cell : MonoBehaviour
         idxInArray = new Vector2Int(idxX, idxY);
         callBack = _callback;
         flamable = _flamable;
-        burning = _burning;
         callBack = _callback;
-        SetMaterial(active, burning);
+        SetFlamableMaterial(flamable);
 
     }
 
     //TODO: implement fire spreading
-    private void SetMaterial(bool _flamable, bool _burning)
+    private void SetFlamableMaterial(bool _flamable)
     {
         if (_flamable)
-        {
-            if (true)
-            {
-
-            } else if (true)
-            {
-
-            } else if (true)
-            {
-
-            } else return;
-        } else if (_burning)
         {
             if (true)
             {
@@ -76,13 +63,19 @@ public class Cell : MonoBehaviour
 
             }
             else return;
-        } else return;
-       
+        }
+        else SetBurningMaterial(burning ? anyBurningMat : anyNonBurningMat);
     }
 
-    private void UpdateCellStatus(bool _burning)
+    private void SetBurningMaterial()
     {
-        burning = _burning;
+
+    }
+
+    public void UpdateCellStatus(bool _flamable)
+    {
+        flamable = _flamable;
+        SetFlamableMaterial(flamable ? materialFlamable : materialInflamable);
     }
 
     private void OnMouseOver()
