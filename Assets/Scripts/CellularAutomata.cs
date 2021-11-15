@@ -115,6 +115,7 @@ public class CellularAutomata : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //Only step into camera zoom when needed
         if (cameraZoom != currentCamDistance)
         {
             CameraZoom();
@@ -216,7 +217,7 @@ public class CellularAutomata : MonoBehaviour
                     textGO.transform.Rotate(90f, 0, 0, Space.Self);
                     //Assign cells
                     spawnedCells[j, i] = cellGO.GetComponent<Cell>();
-                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurningSlightly, materialBurningNormal, materialBurningExtremely, seedIntForCells, j, i, OnCellChanged, map[j, i] == 1);
+                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurningSlightly, materialBurningNormal, materialBurningExtremely, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING);
                     //Assign / spawn text
                     textMesh.text = ((int)(spawnedCells[j, i].GetCurrentState())).ToString();
                 }
@@ -234,11 +235,10 @@ public class CellularAutomata : MonoBehaviour
 
                     //Assign cells
                     spawnedCells[j, i] = cellGO.GetComponent<Cell>();
-                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurningSlightly, materialBurningNormal, materialBurningExtremely, seedIntForCells, j, i, OnCellChanged, map[j, i] == 1);
+                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurningSlightly, materialBurningNormal, materialBurningExtremely, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING);
                 }
             }
         }
-
         return spawnedCells;
     }
 
@@ -280,17 +280,17 @@ public class CellularAutomata : MonoBehaviour
                         newMap[j,i] = RandomStatus();
                     }
                 //Cell inactive
-                }else if (_map[j,i] == 0)
+                }else if (_map[j,i] == (int)EInternalStates.E_INFLAMABLE)
                 {
                     //Rule 4: if less than 7 neighbours -> stay inflamable
                     if (activeNeighbours <=6)
                     {
-                        newMap[j, i] = 0;
+                        newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
                     }
                     //Rule 5: if more than 8 neighbours -> flamable
                     else if (activeNeighbours >= 9)
                     {
-                        newMap[j, i] = 1;
+                        newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
                     }
                     //Rule 6: if >6 and <9 -> randomly set status
                     else
@@ -334,7 +334,7 @@ public class CellularAutomata : MonoBehaviour
                 {
                     //if flamable
                     //TODO: do burning cells count?
-                    if (_map[j,i] == 1)
+                    if (_map[j,i] == (int)EInternalStates.E_FLAMABLE)
                     {
                         neighbourCount++;
                     }

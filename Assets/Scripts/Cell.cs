@@ -85,7 +85,7 @@ public class Cell : MonoBehaviour
 
         seedIntForCells = _seedIntForCells;
         // Set flamable Material if cell is flamable -> else set inflamable material
-        Debug.Log($"flamable: {flamable} burning: {burning}");
+        //Debug.Log($"flamable: {flamable} burning: {burning}");
         SetFlamableMaterial(flamable ? materialFlamable : materialInflamable);
     }
 
@@ -95,6 +95,7 @@ public class Cell : MonoBehaviour
     /// <param name="_material"></param>
     private void SetFlamableMaterial(Material _material)
     {
+        Debug.Log(_material);
         rend.material = _material;
     }
 
@@ -126,6 +127,7 @@ public class Cell : MonoBehaviour
             rend.material = _materialBurningExtremely;
         }
         else return;
+        Debug.Log(rend.material);
     }
 
     /// <summary>
@@ -137,36 +139,46 @@ public class Cell : MonoBehaviour
     {
         flamable = _flamable;
         burning = _burning;
-        if (burning)
+        if (flamable)
+        {
+            SetFlamableMaterial(materialFlamable);
+        }
+        else if (flamable && burning)
         {
             SetRandomBurningMaterial(materialBurningSlightly, materialBurningNormal, materialBurningExtremly);
         }
-        else
-        {
-            SetFlamableMaterial(flamable ? materialFlamable : materialInflamable);
-        }
+        else SetFlamableMaterial(materialInflamable);
     }
 
     private void OnMouseOver()
     {
         bool switched = false;
         //Set fire
-        if (Input.GetKeyDown(KeyCode.Mouse0) && !burning && flamable)
+        if (Input.GetKeyDown(KeyCode.Mouse0) )
         {
-            burning = true;
-            switched = true;
+            if (!burning && flamable)
+            {
+                Debug.Log("Setting fire");
+                burning = true;
+                switched = true;
+            }else if (burning)
+            {
+                Debug.Log("Remove fire");
+                burning = false;
+                switched = true;
+            }
         }
-        else if (Input.GetKeyDown(KeyCode.Mouse1) && burning)
-        {
-            burning = false;
-            switched = true;
-        }
+
         if (switched)
         {
             callback(idxInArray, flamable, burning);
         }
     }
 
+    /// <summary>
+    /// Getter for Cellular automata
+    /// </summary>
+    /// <returns>current state</returns>
     public EInternalStates GetCurrentState()
     {
         if (!flamable)
