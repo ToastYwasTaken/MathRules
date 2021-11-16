@@ -121,7 +121,6 @@ public class CellularAutomata : MonoBehaviour
             CameraZoom();
             currentCamDistance = cameraZoom;
         }
-        map = OneStepInGame(map);
     }
 
     private void FixedUpdate()
@@ -267,16 +266,19 @@ public class CellularAutomata : MonoBehaviour
                     //Rule 1: if less than 3 neighbours -> inflamable
                     if (activeNeighbours <= 2)
                     {
+                        Debug.Log("cell flamable | activeNeighbors <=2 | state => 0");
                         newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
                     }
                     //Rule 2: if more than 8 neighbours -> stay flamable
                     else if (activeNeighbours >= 9)
                     {
+                        Debug.Log("cell flamable | activeNeighbors >= 9 | state => 2");
                         newMap[j, i] = (int)EInternalStates.E_BURNING;
                     }
                     //Rule 3: if >2 and <9 -> randomly set status
                     else
                     {
+                        Debug.Log("cell flamable | activeNeighbors other | random gen");
                         newMap[j,i] = RandomStatus();
                     }
                 //Cell inactive
@@ -285,16 +287,20 @@ public class CellularAutomata : MonoBehaviour
                     //Rule 4: if less than 7 neighbours -> stay inflamable
                     if (activeNeighbours <=6)
                     {
+                        //Here
+                        Debug.Log("cell inflamable | activeNeighbors <=6 | state => 0");
                         newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
                     }
                     //Rule 5: if more than 8 neighbours -> flamable
                     else if (activeNeighbours >= 9)
                     {
+                        Debug.Log("cell inflamable | activeNeighbors >=9 | state => 1");
                         newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
                     }
                     //Rule 6: if >6 and <9 -> randomly set status
                     else
                     {
+                        Debug.Log("cell inflamable | activeNeighbors other | state => random gen");
                         newMap[j, i] = RandomStatus();
                     }
                 }
