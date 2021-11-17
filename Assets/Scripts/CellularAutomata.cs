@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 /******************************************************************************
  * Project: MathRules
  * File: CellularAutomata.cs
@@ -34,7 +32,8 @@ public enum EInternalStates
     E_INVALID = -1,
     E_INFLAMABLE = 0,
     E_FLAMABLE = 1,
-    E_BURNING = 2
+    E_BURNING = 2,
+    E_BURNT = 3
 }
 public class CellularAutomata : MonoBehaviour
 {
@@ -68,11 +67,9 @@ public class CellularAutomata : MonoBehaviour
     [SerializeField]
     private Material materialInflamable;    //grey/white
     [SerializeField]
-    private Material materialBurningSlightly;   //orange
+    private Material materialBurning;
     [SerializeField]
-    private Material materialBurningNormal; //orange-red
-    [SerializeField]
-    private Material materialBurningExtremely;  //deep red
+    private Material materialBurnt;  
 
     [Header("Map settings")]
     [SerializeField]
@@ -98,6 +95,7 @@ public class CellularAutomata : MonoBehaviour
     private Camera cameraRef;
     private const float defaultCamDistance = 25f;
     private float currentCamDistance;
+    private int stepsPassed = 0;
 
     private void Awake()
     {
@@ -126,15 +124,15 @@ public class CellularAutomata : MonoBehaviour
     private void FixedUpdate()
     {
         //Start / stop simulation
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKey(KeyCode.Space))
         {
             if (timer <= 0)
             {
-                map = OneStepInGame(map);
+                map = ApplyRules(map);
                 timer += (1 / (float)fps) * simulationSpeed;
             }
         }
-        if(timer > 0)
+        if (timer > 0)
         {
             timer -= Time.fixedDeltaTime;
         }
@@ -145,8 +143,9 @@ public class CellularAutomata : MonoBehaviour
         if (string.IsNullOrEmpty(_seedString) || _seedString == "noSeed" || string.IsNullOrWhiteSpace(_seedString))
         {
             return (int)System.DateTime.Now.Ticks;
-        } else return _seedString.GetHashCode();
-        
+        }
+        else return _seedString.GetHashCode();
+
     }
 
     /// <summary>
@@ -187,7 +186,7 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_mapWidth">the map's desired width</param>
     /// <param name="_size">the tile size</param>
     /// <returns></returns>
-    private Cell[,] SpawnMap(int [,] map, int _mapHeight, int _mapWidth, float _size)
+    private Cell[,] SpawnMap(int[,] map, int _mapHeight, int _mapWidth, float _size)
     {
         Cell[,] spawnedCells = new Cell[_mapWidth, _mapHeight];
         //Pass a seed to cell
@@ -216,12 +215,13 @@ public class CellularAutomata : MonoBehaviour
                     textGO.transform.Rotate(90f, 0, 0, Space.Self);
                     //Assign cells
                     spawnedCells[j, i] = cellGO.GetComponent<Cell>();
-                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurningSlightly, materialBurningNormal, materialBurningExtremely, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING);
+                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurning, materialBurnt, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_INFLAMABLE, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING, map[j, i] == (int)EInternalStates.E_BURNT);
                     //Assign / spawn text
                     textMesh.text = ((int)(spawnedCells[j, i].GetCurrentState())).ToString();
                 }
             }
-        }else
+        }
+        else
         {
             for (int i = 0; i < _mapHeight; i++)
             {
@@ -234,7 +234,7 @@ public class CellularAutomata : MonoBehaviour
 
                     //Assign cells
                     spawnedCells[j, i] = cellGO.GetComponent<Cell>();
-                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurningSlightly, materialBurningNormal, materialBurningExtremely, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING);
+                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurning, materialBurnt, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_INFLAMABLE, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING, map[j, i] == (int)EInternalStates.E_BURNT);
                 }
             }
         }
@@ -246,7 +246,7 @@ public class CellularAutomata : MonoBehaviour
     /// </summary>
     /// <param name="_map">current map</param>
     /// <returns>updated map</returns>
-    private int[,] OneStepInGame(int[,] _map)
+    private int[,] ApplyRules(int[,] _map)
     {
         int newWidth = _map.GetLength(0);
         int newHeight = _map.GetLength(1);
@@ -259,54 +259,80 @@ public class CellularAutomata : MonoBehaviour
                 //get all active neighbours | max 8 active neighbours
                 int activeNeighbours = GetActiveNeighbours(_map, j, i);
 
-                //Rules here
-                //Cell active
-                if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
+                ////Rules here
+                ////Cell active
+                //if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
+                //{
+                //    //Rule 1: if less than 2 neighbours -> inflamable
+                //    if (activeNeighbours <= 1)
+                //    {
+                //        //here
+                //        Debug.Log("cell flamable | activeNeighbors <=2 | state => 0");
+                //        newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
+                //    }
+                //    //Rule 2: if more than 2 neighbours -> stay flamable
+                //    else if (activeNeighbours >= 3)
+                //    {
+                //        Debug.Log("cell flamable | activeNeighbors >= 9 | state => 2");
+                //        newMap[j, i] = (int)EInternalStates.E_BURNING;
+                //    }
+                //    //Rule 3: if between -> randomly set status
+                //    else
+                //    {
+                //        //here
+                //        //Debug.Log("cell flamable | activeNeighbors other | random 0, 1 or 2");
+                //        //newMap[j, i] = RandomStatus(0, 3);
+                //        Debug.Log("cell flamable | in else");
+                //        _map[j, i] = (int)EInternalStates.E_FLAMABLE;
+                //    }
+                //    //Cell inactive
+                //}
+                //else if (_map[j, i] == (int)EInternalStates.E_INFLAMABLE)
+                //{
+                //    //Rule 4: if less than 3 neighbours -> stay inflamable
+                //    if (activeNeighbours <= 2)
+                //    {
+                //        //Here
+                //        Debug.Log("cell inflamable | activeNeighbors <=6 | state => 0");
+                //        newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
+                //    }
+                //    //Rule 5: if more than 4 neighbours -> flamable
+                //    else if (activeNeighbours >= 5)
+                //    {
+                //        Debug.Log("cell inflamable | activeNeighbors >=9 | state => 1");
+                //        newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
+                //    }
+                //    //Rule 6: if betweem -> randomly set status to flamable or inflamable
+                //    else
+                //    {
+                //        //Debug.Log("cell inflamable | activeNeighbors other | state => random 0 or 1");
+                //        //newMap[j, i] = RandomStatus(0, 2);
+                //        Debug.Log("cell inflamable | in else");
+                //        newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
+                //    }
+                //}
+                if(activeNeighbours >= 1)
                 {
-                    //Rule 1: if less than 3 neighbours -> inflamable
-                    if (activeNeighbours <= 2)
+                    if (newMap[j, i] == (int)EInternalStates.E_BURNING)
                     {
-                        Debug.Log("cell flamable | activeNeighbors <=2 | state => 0");
-                        newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
+                        //switch to burnt after burning for x steps
+                        if (stepsPassed > 10)
+                        {
+                            newMap[j,i] = (int)EInternalStates.E_BURNT;
+                        }   
                     }
-                    //Rule 2: if more than 8 neighbours -> stay flamable
-                    else if (activeNeighbours >= 9)
+                    else if (newMap[j, i] == (int)EInternalStates.E_FLAMABLE)
                     {
-                        Debug.Log("cell flamable | activeNeighbors >= 9 | state => 2");
-                        newMap[j, i] = (int)EInternalStates.E_BURNING;
-                    }
-                    //Rule 3: if >2 and <9 -> randomly set status
-                    else
-                    {
-                        Debug.Log("cell flamable | activeNeighbors other | random gen");
-                        newMap[j,i] = RandomStatus();
-                    }
-                //Cell inactive
-                }else if (_map[j,i] == (int)EInternalStates.E_INFLAMABLE)
-                {
-                    //Rule 4: if less than 7 neighbours -> stay inflamable
-                    if (activeNeighbours <=6)
-                    {
-                        //Here
-                        Debug.Log("cell inflamable | activeNeighbors <=6 | state => 0");
-                        newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
-                    }
-                    //Rule 5: if more than 8 neighbours -> flamable
-                    else if (activeNeighbours >= 9)
-                    {
-                        Debug.Log("cell inflamable | activeNeighbors >=9 | state => 1");
-                        newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
-                    }
-                    //Rule 6: if >6 and <9 -> randomly set status
-                    else
-                    {
-                        Debug.Log("cell inflamable | activeNeighbors other | state => random gen");
-                        newMap[j, i] = RandomStatus();
-                    }
+                        //randomly set fire
+                        if (RandomStatus(activeNeighbours))
+                        {
+                            newMap[j, i] = (int)EInternalStates.E_BURNING;
+                        }
+                    } 
                 }
-
             }
         }
+        stepsPassed++;
         UpdateMap(newMap, newHeight, newWidth);
         return newMap;
     }
@@ -331,22 +357,22 @@ public class CellularAutomata : MonoBehaviour
             for (int j = _posOnMapX - 1; j <= _posOnMapX + 1; j++)
             {
                 //origin -> not a neighbour
-                if(i == _posOnMapY && j == _posOnMapX)
+                if (i == _posOnMapY && j == _posOnMapX)
                 {
                     continue;
                 }
-                // check if on map
-                if(i >= 0 && i < mapHeight && j >= 0 && j < mapWidth)
+                // check if position on map
+                if (i >= 0 && i < mapHeight && j >= 0 && j < mapWidth)
                 {
                     //if flamable
-                    //TODO: do burning cells count?
-                    if (_map[j,i] == (int)EInternalStates.E_FLAMABLE)
+                    if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
                     {
                         neighbourCount++;
                     }
                 }
             }
         }
+        Debug.Log($"neighbours: {neighbourCount}");
         return neighbourCount;
     }
 
@@ -363,7 +389,7 @@ public class CellularAutomata : MonoBehaviour
             for (int j = 0; j < _mapWidth; j++)
             {
                 //Updates the state in the cells | if 1 -> cell active | if 2 -> burning 
-                allCells[j, i].UpdateCellStatus(_map[j, i] == (int)EInternalStates.E_FLAMABLE, _map[j, i] == (int)EInternalStates.E_BURNING);
+                allCells[j, i].UpdateCellStatus(_map[j, i] == (int)EInternalStates.E_INFLAMABLE, _map[j, i] == (int)EInternalStates.E_FLAMABLE, _map[j, i] == (int)EInternalStates.E_BURNING, _map[j, i] == (int)EInternalStates.E_BURNT);
             }
         }
     }
@@ -375,8 +401,12 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_flamable"></param>
     /// <param name="_flamable"></param>
     /// <param name="_burning"></param>
-    private void OnCellChanged(Vector2Int _position, bool _flamable, bool _burning)
+    private void OnCellChanged(Vector2Int _position, bool _inflamable, bool _flamable, bool _burning, bool _burnt)
     {
+        if (_inflamable)
+        {
+            map[_position.x, _position.y] = (int)EInternalStates.E_INFLAMABLE;
+        }
         if (_flamable)
         {
             map[_position.x, _position.y] = (int)EInternalStates.E_FLAMABLE;
@@ -384,27 +414,40 @@ public class CellularAutomata : MonoBehaviour
         else if (_burning)
         {
             map[_position.x, _position.y] = (int)EInternalStates.E_BURNING;
-        } else // if(_inflamable) not necessary tho
+        }
+        else if(_burnt) 
         {
-            map[_position.x, _position.y] = (int)EInternalStates.E_INFLAMABLE;
+            map[_position.x, _position.y] = (int)EInternalStates.E_BURNT;
         }
         UpdateMap(map, map.GetLength(0), map.GetLength(1));
     }
 
     /// <summary>
-    /// Generates a number between 0 and 2 (incl)
+    /// Returns a random value between lower(inclusive) and upper(exclusive)
     /// </summary>
-    /// <returns>a random number in that range</returns>
-    private int RandomStatus()
+    /// <param name="_lowerIncl">Inclusive lower number</param>
+    /// <param name="_higherExcl">Exclusive upper number</param>
+    /// <returns>random number in range</returns>
+    //private int RandomStatus(int _lowerIncl, int _higherExcl)
+    //{
+    //    seedInt = GenerateSeedStringToInt(seedString);
+    //    System.Random rdm = new System.Random(seedInt);
+    //    int rdmInt = rdm.Next(_lowerIncl, _higherExcl);
+    //    return rdmInt;
+    //}
+
+    private bool RandomStatus(int _neighbourCount)
     {
-        seedInt = GenerateSeedStringToInt(seedString);
-        System.Random rdm = new System.Random(seedInt);
-        int rdmInt = rdm.Next(0, 3);
-        return rdmInt;
+        float probability = _neighbourCount / 8;
+        if (probability >= 1)
+        {
+            return true;
+        }
+        else return false;
     }
 
     private void CameraZoom()
     {
-        cameraRef.transform.position = new Vector3 (0f, cameraZoom, 0f);
+        cameraRef.transform.position = new Vector3(0f, cameraZoom, 0f);
     }
 }

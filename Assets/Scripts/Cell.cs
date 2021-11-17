@@ -35,17 +35,19 @@ public class Cell : MonoBehaviour
     private Material materialFlamable;
 
     //Burning mats
-    private Material materialBurningSlightly;
-    private Material materialBurningNormal;
-    private Material materialBurningExtremly;
+    private Material materialBurning;
+    private Material materialBurnt;
 
     private Vector2Int idxInArray;
     private int seedIntForCells;
 
-    //Callback for [first bool] flamable and [second bool] burning
-    private Action<Vector2Int, bool, bool> callback;
+    //Callback for [first bool] inflamable [second bool] flamable [third bool] burning [fourth bool] burnt
+    private Action<Vector2Int, bool, bool, bool, bool> callback;
+    private bool inflamable;
     private bool flamable;
-    private bool burning;
+    private bool burning;   
+    private bool burnt;
+    
     private EInternalStates state;
 
     private void Awake()
@@ -59,25 +61,23 @@ public class Cell : MonoBehaviour
     /// <param name="_cellularAutomata">reference to the Cellular automata</param>
     /// <param name="_materialInflamable">material</param>
     /// <param name="_materialFlamable">material</param>
-    /// <param name="_materialBurningSlightly">material</param>
-    /// <param name="_materialBurningNormal">material</param>
-    /// <param name="_materialBurningExtremly">material</param>
+    /// <param name="_materialBurning">material</param>
+    /// <param name="_materialBurnt">material</param>
     /// <param name="_seedIntForCells">seed used to spread fire</param>
     /// <param name="idxX">X coordinate of the cell in the 2D array of cells </param>
     /// <param name="idxY">Y coordinate of the cell in the 2D array of cells </param>
     /// <param name="_callback">Callback for igniting fire</param>
     /// <param name="_flamable">default: false</param>
     /// <param name="_burning">default: false</param>
-    public void AssignCell(CellularAutomata _cellularAutomata, Material _materialInflamable, Material _materialFlamable, Material _materialBurningSlightly, Material _materialBurningNormal, Material _materialBurningExtremly, int _seedIntForCells, int idxX, int idxY, Action<Vector2Int, bool, bool> _callback, bool _flamable = false, bool _burning = false)
+    public void AssignCell(CellularAutomata _cellularAutomata, Material _materialInflamable, Material _materialFlamable, Material _materialBurning, Material _materialBurnt, int _seedIntForCells, int idxX, int idxY, Action<Vector2Int, bool, bool, bool, bool> _callback, bool inflamable = false, bool _flamable = false, bool _burning = false, bool _burnt = false)
     {
         cellularAutomata = _cellularAutomata;
         idxInArray = new Vector2Int(idxX, idxY);
 
         materialInflamable = _materialInflamable;
         materialFlamable = _materialFlamable;
-        materialBurningSlightly = _materialBurningSlightly;
-        materialBurningNormal = _materialBurningNormal;
-        materialBurningExtremly = _materialBurningExtremly;
+        materialBurning = _materialBurning;
+        materialBurnt = _materialBurnt;
 
         callback = _callback;
         flamable = _flamable;
@@ -85,15 +85,15 @@ public class Cell : MonoBehaviour
 
         seedIntForCells = _seedIntForCells;
         // Set flamable Material if cell is flamable -> else set inflamable material
-        //Debug.Log($"flamable: {flamable} burning: {burning}");
-        SetFlamableMaterial(flamable ? materialFlamable : materialInflamable);
+        //Debug.Log($"inflamable: {inflamable} | flamable: {flamable} | burning: {burning} | burnt : {burnt}");
+        SetMaterial(flamable ? materialFlamable : materialInflamable);
     }
 
     /// <summary>
     /// Set foundary material of cell
     /// </summary>
     /// <param name="_material"></param>
-    private void SetFlamableMaterial(Material _material)
+    private void SetMaterial(Material _material)
     {
         Debug.Log(_material);
         rend.material = _material;
@@ -135,26 +135,34 @@ public class Cell : MonoBehaviour
     /// </summary>
     /// <param name="_flamable">state passed by Cellular automata</param>
     /// <param name="_burning">state passed by Cellular automata</param>
-    public void UpdateCellStatus(bool _flamable, bool _burning)
+    public void UpdateCellStatus(bool _inflamable, bool _flamable, bool _burning, bool _burnt)
     {
+        inflamable = _inflamable;
         flamable = _flamable;
         burning = _burning;
-        if (flamable)
+        burnt = _burnt;
+        if (inflamable)
         {
-            SetFlamableMaterial(materialFlamable);
-        }
-        else if (flamable && burning)
+            SetMaterial(materialInflamable);
+        }else if (flamable)
         {
-            SetRandomBurningMaterial(materialBurningSlightly, materialBurningNormal, materialBurningExtremly);
+            SetMaterial(materialFlamable);
         }
-        else SetFlamableMaterial(materialInflamable);
+        else if (burning)
+        {
+            SetMaterial(materialBurning);
+        }
+        else if (burnt)
+        {
+            SetMaterial(materialBurnt);
+        }
     }
 
     private void OnMouseOver()
     {
         bool switched = false;
         //Set fire
-        if (Input.GetKeyDown(KeyCode.Mouse0) )
+        if (Input.GetMouseButton(0))
         {
             if (!burning && flamable)
             {
@@ -171,7 +179,7 @@ public class Cell : MonoBehaviour
 
         if (switched)
         {
-            callback(idxInArray, flamable, burning);
+            callback(idxInArray, inflamable, flamable, burning, burnt);
         }
     }
 

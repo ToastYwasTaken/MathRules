@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.43667564, g: 0.48427135, b: 0.5645232, a: 1}
+  m_IndirectSpecularColor: {r: 0.4366757, g: 0.48427194, b: 0.5645252, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -157,7 +157,7 @@ MonoBehaviour:
   displayStates: 0
   fontSize: 6
   textColor: {r: 1, g: 1, b: 1, a: 0.23529412}
-  cameraZoom: 25
+  cameraZoom: 34
   cellPrefab: {fileID: 6018641452474890952, guid: 4a4134f77ad21064391b932239933ada, type: 3}
   cellSize: 1
   textPrefab: {fileID: 3645232215158329862, guid: a358b1053b60f43498c5319ad3981e28, type: 3}
@@ -166,10 +166,10 @@ MonoBehaviour:
   materialBurningSlightly: {fileID: 2100000, guid: c696f397f093e31498c2a278c3b8abb5, type: 2}
   materialBurningNormal: {fileID: 2100000, guid: aa0297a6d2b6d30478bddd308db2666e, type: 2}
   materialBurningExtremely: {fileID: 2100000, guid: f3ad7f874d7921c40964a0885750babb, type: 2}
-  width: 80
-  height: 45
+  width: 64
+  height: 40
   randomlyGenerated: 1
-  fillPercent: 15
+  fillPercent: 49.5
   seedString: randomSeed
   seedStringForCells: randoSeedo
 --- !u!4 &107003509
@@ -290,6 +290,7 @@ GameObject:
   - component: {fileID: 963194228}
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
+  - component: {fileID: 963194229}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -362,6 +363,39 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!114 &963194229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
 --- !u!1 &1732889220
 GameObject:
   m_ObjectHideFlags: 0

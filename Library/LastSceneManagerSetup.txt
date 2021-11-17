@@ -1,5 +1,5 @@
 sceneSetups:
-- path: Assets/Scenes/Physics.unity
+- path: Assets/Scenes/CellularAutomata.unity
   isLoaded: 1
   isActive: 1
   isSubScene: 0
