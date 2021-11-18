@@ -258,7 +258,7 @@ public class CellularAutomata : MonoBehaviour
             {
                 //get all active neighbours | max 8 active neighbours
                 int activeNeighbours = GetActiveNeighbours(_map, j, i);
-
+                #region old rules
                 ////Rules here
                 ////Cell active
                 //if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
@@ -311,6 +311,7 @@ public class CellularAutomata : MonoBehaviour
                 //        newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
                 //    }
                 //}
+                #endregion
                 if(activeNeighbours >= 1)
                 {
                     if (newMap[j, i] == (int)EInternalStates.E_BURNING)
@@ -388,7 +389,7 @@ public class CellularAutomata : MonoBehaviour
         {
             for (int j = 0; j < _mapWidth; j++)
             {
-                //Updates the state in the cells | if 1 -> cell active | if 2 -> burning 
+                //Updates the state in the cells 
                 allCells[j, i].UpdateCellStatus(_map[j, i] == (int)EInternalStates.E_INFLAMABLE, _map[j, i] == (int)EInternalStates.E_FLAMABLE, _map[j, i] == (int)EInternalStates.E_BURNING, _map[j, i] == (int)EInternalStates.E_BURNT);
             }
         }
