@@ -154,7 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fps: 10
   simulationSpeed: 1
-  displayStates: 0
+  displayStates: 1
   fontSize: 6
   textColor: {r: 1, g: 1, b: 1, a: 0.23529412}
   cameraZoom: 34
@@ -163,15 +163,16 @@ MonoBehaviour:
   textPrefab: {fileID: 3645232215158329862, guid: a358b1053b60f43498c5319ad3981e28, type: 3}
   materialFlamable: {fileID: 2100000, guid: e50db2a1b8514a74992951af77c46a11, type: 2}
   materialInflamable: {fileID: 2100000, guid: efebb674e3a876442b655f4f50616de3, type: 2}
-  materialBurningSlightly: {fileID: 2100000, guid: c696f397f093e31498c2a278c3b8abb5, type: 2}
-  materialBurningNormal: {fileID: 2100000, guid: aa0297a6d2b6d30478bddd308db2666e, type: 2}
-  materialBurningExtremely: {fileID: 2100000, guid: f3ad7f874d7921c40964a0885750babb, type: 2}
-  width: 64
-  height: 40
+  materialBurning: {fileID: 2100000, guid: aa0297a6d2b6d30478bddd308db2666e, type: 2}
+  materialBurnt: {fileID: 2100000, guid: f3ad7f874d7921c40964a0885750babb, type: 2}
+  materialInvalid: {fileID: 2100000, guid: a626c65c954b02946a74c7a6dbecd412, type: 2}
+  width: 4
+  height: 4
   randomlyGenerated: 1
-  fillPercent: 49.5
+  fillPercent: 50.5
   seedString: randomSeed
   seedStringForCells: randoSeedo
+  switchStatusAfterSteps: 10
 --- !u!4 &107003509
 Transform:
   m_ObjectHideFlags: 0

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 /******************************************************************************
@@ -69,13 +70,15 @@ public class CellularAutomata : MonoBehaviour
     [SerializeField]
     private Material materialBurning;
     [SerializeField]
-    private Material materialBurnt;  
+    private Material materialBurnt;
+    [SerializeField]
+    private Material materialInvalid;
 
     [Header("Map settings")]
     [SerializeField]
-    private int width;
+    private int width = 64; //default value
     [SerializeField]
-    private int height;
+    private int height = 40; //default value
     [SerializeField]
     private bool randomlyGenerated;
     [SerializeField, Range(0, 100)]
@@ -86,6 +89,8 @@ public class CellularAutomata : MonoBehaviour
     [Tooltip("For no seed enter 'noSeed' or nothing")]
     [SerializeField]
     private string seedStringForCells;
+    [SerializeField]
+    private int switchStatusAfterSteps = 10;
 
     private int[,] map;
     private Cell[,] allCells;
@@ -96,6 +101,7 @@ public class CellularAutomata : MonoBehaviour
     private const float defaultCamDistance = 25f;
     private float currentCamDistance;
     private int stepsPassed = 0;
+    private List<GameObject> allTextGOs = new List<GameObject>();
 
     private void Awake()
     {
@@ -136,6 +142,10 @@ public class CellularAutomata : MonoBehaviour
         {
             timer -= Time.fixedDeltaTime;
         }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            map = ApplyRules(map);
+        }
     }
 
     private int GenerateSeedStringToInt(string _seedString)
@@ -155,7 +165,7 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_height">desired height of the map</param>
     /// <param name="_randomlyGenerated">should the map be randomly generated?</param>
     /// <param name="_fillPercent">how much percent of the map should be 'active'</param>
-    /// <returns></returns>
+    /// <returns>new map</returns>
     private int[,] GenerateMap(int _width, int _height, bool _randomlyGenerated, float _fillPercent)
     {
         seedInt = GenerateSeedStringToInt(seedString);
@@ -193,7 +203,8 @@ public class CellularAutomata : MonoBehaviour
         int seedIntForCells = GenerateSeedStringToInt(seedStringForCells);
         //make map centered at (0,0,0)
         Vector3 spawnOffset = new Vector3(_mapWidth, 0, _mapHeight) * -0.5f;
-        Vector3 textOffset = new Vector3(0, 2, 0);
+        //offset text above cells
+        Vector3 textOffset = new Vector3(0, 0.7f, 0);
         //map spawning
         if (displayStates)
         {
@@ -215,9 +226,12 @@ public class CellularAutomata : MonoBehaviour
                     textGO.transform.Rotate(90f, 0, 0, Space.Self);
                     //Assign cells
                     spawnedCells[j, i] = cellGO.GetComponent<Cell>();
-                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurning, materialBurnt, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_INFLAMABLE, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING, map[j, i] == (int)EInternalStates.E_BURNT);
+                    spawnedCells[j, i].AssignCell(this, materialInvalid, materialInflamable, materialFlamable, materialBurning, materialBurnt, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_INFLAMABLE, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING, map[j, i] == (int)EInternalStates.E_BURNT);
                     //Assign / spawn text
-                    textMesh.text = ((int)(spawnedCells[j, i].GetCurrentState())).ToString();
+                    Debug.Log($"Cell[{j}|{i}] : {spawnedCells[j, i].state}");
+                    textMesh.text = ((int)(spawnedCells[j, i].state)).ToString();
+                    //save text GOs
+                    allTextGOs.Add(textGO);
                 }
             }
         }
@@ -234,7 +248,7 @@ public class CellularAutomata : MonoBehaviour
 
                     //Assign cells
                     spawnedCells[j, i] = cellGO.GetComponent<Cell>();
-                    spawnedCells[j, i].AssignCell(this, materialInflamable, materialFlamable, materialBurning, materialBurnt, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_INFLAMABLE, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING, map[j, i] == (int)EInternalStates.E_BURNT);
+                    spawnedCells[j, i].AssignCell(this, materialInvalid, materialInflamable, materialFlamable, materialBurning, materialBurnt, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_INFLAMABLE, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING, map[j, i] == (int)EInternalStates.E_BURNT);
                 }
             }
         }
@@ -312,24 +326,42 @@ public class CellularAutomata : MonoBehaviour
                 //    }
                 //}
                 #endregion
+
                 if(activeNeighbours >= 1)
                 {
                     if (newMap[j, i] == (int)EInternalStates.E_BURNING)
                     {
+                        Debug.Log("Cell burning");
                         //switch to burnt after burning for x steps
-                        if (stepsPassed > 10)
+                        if (stepsPassed >= switchStatusAfterSteps)
                         {
+                            Debug.Log("Setting cell burnt");
                             newMap[j,i] = (int)EInternalStates.E_BURNT;
-                        }   
+                        }
+                        else
+                        {
+                            Debug.Log("Cell stays burning");
+                        }
                     }
                     else if (newMap[j, i] == (int)EInternalStates.E_FLAMABLE)
                     {
+                        Debug.Log("Cell flamable");
                         //randomly set fire
                         if (RandomStatus(activeNeighbours))
                         {
+                            Debug.Log("Set flamable cell on fire");
                             newMap[j, i] = (int)EInternalStates.E_BURNING;
                         }
-                    } 
+                        else
+                        {
+                            Debug.Log("Don't set flamable cell on fire");
+                        }
+                    }
+                    else
+                    {
+                        Debug.Log("cell not burning or flamable");
+                        stepsPassed++;
+                    }
                 }
             }
         }
@@ -342,8 +374,6 @@ public class CellularAutomata : MonoBehaviour
     /// Gets the neighbourcount of a Cell at posX, poxY on _map
     /// </summary>
     /// <param name="_map">the map which neighbourcount is wished to be determinated</param>
-    /// <param name="_newMapHeight"></param>
-    /// <param name="_newMapWidth"></param>
     /// <param name="_posOnMapX"></param>
     /// <param name="_posOnMapY"></param>
     /// <returns>count of active neighbours</returns>
@@ -373,7 +403,7 @@ public class CellularAutomata : MonoBehaviour
                 }
             }
         }
-        Debug.Log($"neighbours: {neighbourCount}");
+        //Debug.Log($"neighbours: {neighbourCount}");
         return neighbourCount;
     }
 
@@ -385,12 +415,22 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_mapWidth">the map's width</param>
     private void UpdateMap(int[,] _map, int _mapHeight, int _mapWidth)
     {
+        int textGOsCounter = 0;
+        int textGOsMaxCounter = allTextGOs.Count;
         for (int i = 0; i < _mapHeight; i++)
         {
             for (int j = 0; j < _mapWidth; j++)
             {
                 //Updates the state in the cells 
                 allCells[j, i].UpdateCellStatus(_map[j, i] == (int)EInternalStates.E_INFLAMABLE, _map[j, i] == (int)EInternalStates.E_FLAMABLE, _map[j, i] == (int)EInternalStates.E_BURNING, _map[j, i] == (int)EInternalStates.E_BURNT);
+                //Update cell displays
+                if (displayStates && textGOsCounter <= textGOsMaxCounter)
+                {
+                    GameObject currentTextGO = allTextGOs[textGOsCounter];
+                    TextMeshPro textMesh = currentTextGO.GetComponent<TextMeshPro>();
+                    textMesh.text = ((int)(allCells[j, i].state)).ToString();
+                    textGOsCounter++;
+                }
             }
         }
     }

@@ -38,6 +38,9 @@ public class Cell : MonoBehaviour
     private Material materialBurning;
     private Material materialBurnt;
 
+    //invalid mat
+    private Material materialInvalid;
+
     private Vector2Int idxInArray;
     private int seedIntForCells;
 
@@ -48,7 +51,8 @@ public class Cell : MonoBehaviour
     private bool burning;   
     private bool burnt;
     
-    private EInternalStates state;
+    [SerializeField]
+    public EInternalStates state;
 
     private void Awake()
     {
@@ -59,6 +63,7 @@ public class Cell : MonoBehaviour
     /// Used to assign the cells from CellularAutomata
     /// </summary>
     /// <param name="_cellularAutomata">reference to the Cellular automata</param>
+    /// <param name="_materialInvalid">material</param>
     /// <param name="_materialInflamable">material</param>
     /// <param name="_materialFlamable">material</param>
     /// <param name="_materialBurning">material</param>
@@ -69,7 +74,7 @@ public class Cell : MonoBehaviour
     /// <param name="_callback">Callback for igniting fire</param>
     /// <param name="_flamable">default: false</param>
     /// <param name="_burning">default: false</param>
-    public void AssignCell(CellularAutomata _cellularAutomata, Material _materialInflamable, Material _materialFlamable, Material _materialBurning, Material _materialBurnt, int _seedIntForCells, int idxX, int idxY, Action<Vector2Int, bool, bool, bool, bool> _callback, bool inflamable = false, bool _flamable = false, bool _burning = false, bool _burnt = false)
+    public void AssignCell(CellularAutomata _cellularAutomata, Material _materialInvalid, Material _materialInflamable, Material _materialFlamable, Material _materialBurning, Material _materialBurnt, int _seedIntForCells, int idxX, int idxY, Action<Vector2Int, bool, bool, bool, bool> _callback, bool _inflamable = false, bool _flamable = false, bool _burning = false, bool _burnt = false)
     {
         cellularAutomata = _cellularAutomata;
         idxInArray = new Vector2Int(idxX, idxY);
@@ -78,14 +83,18 @@ public class Cell : MonoBehaviour
         materialFlamable = _materialFlamable;
         materialBurning = _materialBurning;
         materialBurnt = _materialBurnt;
+        materialInvalid = _materialInvalid;
 
         callback = _callback;
+        inflamable = _inflamable;
         flamable = _flamable;
         burning = _burning;
+        burnt = _burnt;
 
         seedIntForCells = _seedIntForCells;
         // Set flamable Material if cell is flamable -> else set inflamable material
         //Debug.Log($"inflamable: {inflamable} | flamable: {flamable} | burning: {burning} | burnt : {burnt}");
+        UpdateState();
         SetMaterial(flamable ? materialFlamable : materialInflamable);
     }
 
@@ -128,6 +137,7 @@ public class Cell : MonoBehaviour
         }
         else return;
         Debug.Log(rend.material);
+        UpdateState();
     }
 
     /// <summary>
@@ -155,7 +165,11 @@ public class Cell : MonoBehaviour
         else if (burnt)
         {
             SetMaterial(materialBurnt);
+        }else if(state == EInternalStates.E_INVALID)
+        {
+            SetMaterial(materialInvalid);
         }
+        UpdateState();
     }
 
     private void OnMouseOver()
@@ -168,13 +182,18 @@ public class Cell : MonoBehaviour
             {
                 Debug.Log("Setting fire");
                 burning = true;
+                flamable = false;
+                state = EInternalStates.E_BURNING;
                 switched = true;
             }else if (burning)
             {
                 Debug.Log("Remove fire");
                 burning = false;
+                burnt = true;
+                state = EInternalStates.E_BURNT;
                 switched = true;
             }
+            UpdateState();
         }
 
         if (switched)
@@ -183,28 +202,25 @@ public class Cell : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Getter for Cellular automata
-    /// </summary>
-    /// <returns>current state</returns>
-    public EInternalStates GetCurrentState()
+    private void UpdateState()
     {
-        if (!flamable)
+        if (inflamable)
         {
             state = EInternalStates.E_INFLAMABLE;
         }
-        else if (flamable && !burning)
+        else if (flamable)
         {
             state = EInternalStates.E_FLAMABLE;
         }
-        else if (flamable && burning)
+        else if (burning)
         {
             state = EInternalStates.E_BURNING;
         }
+        else if (burnt)
+        {
+            state = EInternalStates.E_BURNT;
+        }
         else state = EInternalStates.E_INVALID;
-
-        return state;
     }
-
 
 }
