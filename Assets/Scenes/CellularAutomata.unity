@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ab1e52b1856cac419e155e72ad8f12d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fps: 1
+  fps: 10
   simulationSpeed: 1
   displayStates: 0
   fontSize: 6
@@ -174,7 +174,7 @@ MonoBehaviour:
   fillPercent: 50.5
   seedString: randomSeed
   seedStringForCells: randoSeedo
-  switchStatusAfterSteps: 10
+  switchStatusAfterSteps: 1000
 --- !u!4 &107003509
 Transform:
   m_ObjectHideFlags: 0

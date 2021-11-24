@@ -111,6 +111,11 @@ public class CellularAutomata : MonoBehaviour
     private int stepsPassed = 0;
     private List<GameObject> allTextGOs = new List<GameObject>();
 
+    private int inflamableNeighbours;    
+    private int flamableNeighbours;
+    private int burningNeighbours;
+    private int burntNeighbours;
+
     private void Awake()
     {
         cameraRef = FindObjectOfType<Camera>();
@@ -292,9 +297,8 @@ public class CellularAutomata : MonoBehaviour
             for (int j = 0; j < newWidth; j++)
             {
                 //get all active neighbours | max 8 active neighbours
-                int flamableNeighbours = GetFlamableNeighbours(_map, j, i);
-                //int 
-                if(flamableNeighbours >= 1)
+                GetAllCurrentNeighbours(_map, j, i);
+                if (flamableNeighbours >= 5)
                 {
                     if (_map[j, i] == (int)EInternalStates.E_BURNING)
                     {
@@ -358,23 +362,20 @@ public class CellularAutomata : MonoBehaviour
                 }
             }
         }
-        stepsPassed++;
         UpdateMap(newMap, newHeight, newWidth);
         return newMap;
     }
 
     /// <summary>
-    /// Gets the neighbourcount of a Cell at posX, poxY on _map
+    /// Updates the count of flamable neighbours of a Cell at posX, poxY on _map
     /// </summary>
     /// <param name="_map">the map which neighbourcount is wished to be determinated</param>
     /// <param name="_posOnMapX"></param>
     /// <param name="_posOnMapY"></param>
-    /// <returns>count of active neighbours</returns>
-    private int GetFlamableNeighbours(int[,] _map, int _posOnMapX, int _posOnMapY)
+    private void GetAllCurrentNeighbours(int[,] _map, int _posOnMapX, int _posOnMapY)
     {
         int mapWidth = _map.GetLength(0);
         int mapHeight = _map.GetLength(1);
-        int neighbourCount = 0;
 
         for (int i = _posOnMapY - 1; i <= _posOnMapY + 1; i++)
         {
@@ -391,14 +392,24 @@ public class CellularAutomata : MonoBehaviour
                     //if flamable
                     if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
                     {
-                        neighbourCount++;
+                        flamableNeighbours++;
+                    }else if(_map[j, i] == (int)EInternalStates.E_INFLAMABLE)
+                    {
+                        inflamableNeighbours++;
+                    }else if(_map[j, i] == (int)EInternalStates.E_BURNING)
+                    {
+                        burningNeighbours++;
+                    }else if(_map[j, i] == (int)EInternalStates.E_BURNT)
+                    {
+                        burntNeighbours++;
                     }
                 }
             }
         }
-        //Debug.Log($"neighbours: {neighbourCount}");
-        return neighbourCount;
+        //Debug.Log($"flamable neighbours: {neighbourCount}");
     }
+
+
 
     /// <summary>
     /// Updates the map after each step of the algorithm or when a cell's state changed
@@ -462,13 +473,6 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_lowerIncl">Inclusive lower number</param>
     /// <param name="_higherExcl">Exclusive upper number</param>
     /// <returns>random number in range</returns>
-    //private int RandomStatus(int _lowerIncl, int _higherExcl)
-    //{
-    //    seedInt = GenerateSeedStringToInt(seedString);
-    //    System.Random rdm = new System.Random(seedInt);
-    //    int rdmInt = rdm.Next(_lowerIncl, _higherExcl);
-    //    return rdmInt;
-    //}
 
     private bool RandomStatus(int _neighbourCount)
     {
