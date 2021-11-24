@@ -108,38 +108,6 @@ public class Cell : MonoBehaviour
         rend.material = _material;
     }
 
-    //TODO: implement fire spreading here
-    /// <summary>
-    /// Change the material accordingly when fire is set
-    /// </summary>
-    /// <param name="_materialBurningSlightly">material</param>
-    /// <param name="_materialBurningNormal">material</param>
-    /// <param name="_materialBurningExtremely">material</param>
-    private void SetRandomBurningMaterial(Material _materialBurningSlightly, Material _materialBurningNormal, Material _materialBurningExtremely)
-    {
-        System.Random rdm = new System.Random(seedIntForCells);
-        //1 rdm int for each Material
-        int rdmIntBurning = rdm.Next(0, 3);
-        //burning slightly
-        if (rdmIntBurning == (int)EInternalStates.E_INFLAMABLE)
-        {
-            rend.material = _materialBurningSlightly;
-        }
-        //burning normal
-        else if (rdmIntBurning == (int)EInternalStates.E_FLAMABLE)
-        {
-            rend.material = _materialBurningNormal;
-        }
-        //burning extremely;
-        else if (rdmIntBurning == (int)EInternalStates.E_BURNING)
-        {
-            rend.material = _materialBurningExtremely;
-        }
-        else return;
-        Debug.Log(rend.material);
-        UpdateState();
-    }
-
     /// <summary>
     /// Updates the cells in case they switched states
     /// </summary>
@@ -157,7 +125,7 @@ public class Cell : MonoBehaviour
         }else if (flamable)
         {
             SetMaterial(materialFlamable);
-        }
+        }  
         else if (burning)
         {
             SetMaterial(materialBurning);

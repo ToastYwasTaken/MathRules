@@ -152,9 +152,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ab1e52b1856cac419e155e72ad8f12d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fps: 10
+  fps: 1
   simulationSpeed: 1
-  displayStates: 1
+  displayStates: 0
   fontSize: 6
   textColor: {r: 1, g: 1, b: 1, a: 0.23529412}
   cameraZoom: 34
@@ -166,9 +166,11 @@ MonoBehaviour:
   materialBurning: {fileID: 2100000, guid: aa0297a6d2b6d30478bddd308db2666e, type: 2}
   materialBurnt: {fileID: 2100000, guid: f3ad7f874d7921c40964a0885750babb, type: 2}
   materialInvalid: {fileID: 2100000, guid: a626c65c954b02946a74c7a6dbecd412, type: 2}
-  width: 4
-  height: 4
-  randomlyGenerated: 1
+  width: 60
+  height: 46
+  randomlyGenerated: 0
+  usePerlinNoise: 1
+  perlinOffset: 0.15
   fillPercent: 50.5
   seedString: randomSeed
   seedStringForCells: randoSeedo
