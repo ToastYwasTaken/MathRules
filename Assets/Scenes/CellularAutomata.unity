@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fps: 10
-  simulationSpeed: 1
+  simulationSpeed: 2
   displayStates: 0
   fontSize: 6
   textColor: {r: 1, g: 1, b: 1, a: 0.23529412}
@@ -174,7 +174,8 @@ MonoBehaviour:
   fillPercent: 50.5
   seedString: randomSeed
   seedStringForCells: randoSeedo
-  switchStatusAfterSteps: 1000
+  switchToBurningAfterXsteps: 4
+  switchToBurntAfterXsteps: 8
 --- !u!4 &107003509
 Transform:
   m_ObjectHideFlags: 0

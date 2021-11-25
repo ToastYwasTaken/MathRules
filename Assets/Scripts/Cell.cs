@@ -59,6 +59,35 @@ public class Cell : MonoBehaviour
         rend = this.gameObject.GetComponent<Renderer>();
     }
 
+    private void OnMouseOver()
+    {
+        bool switched = false;
+        //Set fire
+        if (Input.GetMouseButton(0))
+        {
+            if (!burning && flamable)
+            {
+                Debug.Log("Setting fire");
+                burning = true;
+                flamable = false;
+                state = EInternalStates.E_BURNING;
+                switched = true;
+            }
+            else if (burning)
+            {
+                Debug.Log("Remove fire");
+                burning = false;
+                burnt = true;
+                state = EInternalStates.E_BURNT;
+                switched = true;
+            }
+        }
+        if (switched)
+        {
+            callback(idxInArray, inflamable, flamable, burning, burnt);
+        }
+
+    }
     /// <summary>
     /// Used to assign the cells from CellularAutomata
     /// </summary>
@@ -138,36 +167,6 @@ public class Cell : MonoBehaviour
             SetMaterial(materialInvalid);
         }
         UpdateState();
-    }
-
-    private void OnMouseOver()
-    {
-        bool switched = false;
-        //Set fire
-        if (Input.GetMouseButton(0))
-        {
-            if (!burning && flamable)
-            {
-                Debug.Log("Setting fire");
-                burning = true;
-                flamable = false;
-                state = EInternalStates.E_BURNING;
-                switched = true;
-            }else if (burning)
-            {
-                Debug.Log("Remove fire");
-                burning = false;
-                burnt = true;
-                state = EInternalStates.E_BURNT;
-                switched = true;
-            }
-            UpdateState();
-        }
-
-        if (switched)
-        {
-            callback(idxInArray, inflamable, flamable, burning, burnt);
-        }
     }
 
     private void UpdateState()

@@ -98,7 +98,9 @@ public class CellularAutomata : MonoBehaviour
     [SerializeField]
     private string seedStringForCells;
     [SerializeField]
-    private int switchStatusAfterSteps = 10;
+    private int switchToBurningAfterXsteps = 10;
+    [SerializeField]
+    private int switchToBurntAfterXsteps = 10;
 
     private int[,] map;
     private Cell[,] allCells;
@@ -108,13 +110,15 @@ public class CellularAutomata : MonoBehaviour
     private Camera cameraRef;
     private const float defaultCamDistance = 25f;
     private float currentCamDistance;
-    private int stepsPassed = 0;
     private List<GameObject> allTextGOs = new List<GameObject>();
+    private int stepsPassedToIgnite;
+    private int stepsPassedToBurnOut;
 
     private int inflamableNeighbours;    
     private int flamableNeighbours;
     private int burningNeighbours;
     private int burntNeighbours;
+
 
     private void Awake()
     {
@@ -126,7 +130,7 @@ public class CellularAutomata : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        allCells = SpawnMap(map, height, width, cellSize);
+        allCells = SpawnMap(map, width, height, cellSize);
     }
 
     // Update is called once per frame
@@ -222,7 +226,7 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_mapWidth">the map's desired width</param>
     /// <param name="_size">the tile size</param>
     /// <returns></returns>
-    private Cell[,] SpawnMap(int[,] map, int _mapHeight, int _mapWidth, float _size)
+    private Cell[,] SpawnMap(int[,] map, int _mapWidth, int _mapHeight, float _size)
     {
         Cell[,] spawnedCells = new Cell[_mapWidth, _mapHeight];
         //Pass a seed to cell
@@ -296,73 +300,121 @@ public class CellularAutomata : MonoBehaviour
         {
             for (int j = 0; j < newWidth; j++)
             {
-                //get all active neighbours | max 8 active neighbours
-                GetAllCurrentNeighbours(_map, j, i);
-                if (flamableNeighbours >= 5)
+                //Get burning neighbours 
+                burningNeighbours = ReturnAllBurningNeighbours(_map, j, i);
+                burntNeighbours = ReturnAllBurntNeighbours(_map, j, i);
+                Debug.Log($"steps passed to ignite: {stepsPassedToIgnite} steps passed to burn out: {stepsPassedToBurnOut}");
+                //Rule 1: if any neighbour is burning & this is flamable -> set this on fire after x steps
+                if (burningNeighbours >= 1 && _map[j, i] == (int)EInternalStates.E_FLAMABLE)
                 {
-                    if (_map[j, i] == (int)EInternalStates.E_BURNING)
+                    //Switch cell to burning
+                    if (stepsPassedToIgnite > switchToBurningAfterXsteps)
                     {
-                        Debug.Log("Cell burning");
-                        //switch to burnt after burning for x steps
-                        if (stepsPassed >= switchStatusAfterSteps)
-                        {
-                            Debug.Log("Setting cell burnt");
-                            newMap[j, i] = (int)EInternalStates.E_BURNT;
-                        }
-                        else
-                        {
-                            Debug.Log("Cell stays burning");
-                            newMap[j, i] = (int)EInternalStates.E_BURNING;
-                        }
+                        newMap[j, i] = (int)EInternalStates.E_BURNING;
+                        stepsPassedToIgnite = 0;
                     }
-                    else if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
-                    {
-                        Debug.Log("Cell flamable");
-                        //randomly set fire
-                        if (RandomStatus(flamableNeighbours))
-                        {
-                            Debug.Log("Randomly set flamable cell on fire");
-                            newMap[j, i] = (int)EInternalStates.E_BURNING;
-                        }
-                        else
-                        {
-                            Debug.Log("Stay flamable");
-                            newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
-                        }
-                        stepsPassed++;
-                    }
-                    else if (_map[j, i] == (int)EInternalStates.E_INFLAMABLE)
-                    {
-                        Debug.Log("Cell inflamable");
-                        if (RandomStatus(flamableNeighbours))
-                        {
-                            Debug.Log("Randomly set inflamable cell to flamable");
-                            newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
-                        }
-                        else
-                        {
-                            Debug.Log("Stay inflamable");
-                            newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
-                        }
-                        stepsPassed++;
-                    }
-                    else if (_map[j, i] == (int)EInternalStates.E_BURNT)
-                    {
-                        Debug.Log("Stay burnt");
-                        newMap[j, i] = (int)EInternalStates.E_BURNT;
-                        stepsPassed++;
-                    }
+                    //Keep previous state
                     else
                     {
-                        Debug.Log("Cell invalid");
-                        newMap[j, i] = (int)EInternalStates.E_INVALID;
-                        stepsPassed++;
+                        newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
+                        stepsPassedToIgnite++;
                     }
-
                 }
+                //Rule 2: if more than 3 neighbours burning & this is flamable -> set this on fire
+                else if (burningNeighbours > 3 && _map[j, i] == (int)EInternalStates.E_FLAMABLE)
+                {
+                    newMap[j, i] = (int)EInternalStates.E_BURNING;
+                }
+                //Rule3: if more than 2 neighbours are burning & this is burning -> switch to burnt after x steps
+                else if (burningNeighbours >=3 && _map[j, i] == (int)EInternalStates.E_BURNING)
+                {
+                    if (stepsPassedToBurnOut > switchToBurntAfterXsteps)
+                    {
+                        newMap[j, i] = (int)EInternalStates.E_BURNT;
+                        stepsPassedToBurnOut = 0;
+                    }
+                    //Keep previous state
+                    else
+                    {
+                        newMap[j, i] = (int)EInternalStates.E_BURNING;
+                        stepsPassedToBurnOut++;
+                    }
+                }
+                 //Rule4: if more than 1 neighbour are already burnt & this is burning -> switch to burnt
+                else if (burntNeighbours >= 2 && _map[j, i] == (int)EInternalStates.E_BURNING)
+                {
+                    newMap[j, i] = (int)EInternalStates.E_BURNT;
+                }
+                else 
+                //Keep previous state
+                    newMap[j, i] = _map[j, i];
+                #region oldrules
+                //    GetAllCurrentNeighbours(_map, j, i);
+                //    if (flamableNeighbours >= 5)
+                //    {
+                //        if (_map[j, i] == (int)EInternalStates.E_BURNING)
+                //        {
+                //            Debug.Log("Cell burning");
+                //            //switch to burnt after burning for x steps
+                //            if (stepsPassed >= switchStatusAfterSteps)
+                //            {
+                //                Debug.Log("Setting cell burnt");
+                //                newMap[j, i] = (int)EInternalStates.E_BURNT;
+                //            }
+                //            else
+                //            {
+                //                Debug.Log("Cell stays burning");
+                //                newMap[j, i] = (int)EInternalStates.E_BURNING;
+                //            }
+                //        }
+                //        else if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
+                //        {
+                //            Debug.Log("Cell flamable");
+                //            //randomly set fire
+                //            if (RandomStatus(flamableNeighbours))
+                //            {
+                //                Debug.Log("Randomly set flamable cell on fire");
+                //                newMap[j, i] = (int)EInternalStates.E_BURNING;
+                //            }
+                //            else
+                //            {
+                //                Debug.Log("Stay flamable");
+                //                newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
+                //            }
+                //            stepsPassed++;
+                //        }
+                //        else if (_map[j, i] == (int)EInternalStates.E_INFLAMABLE)
+                //        {
+                //            Debug.Log("Cell inflamable");
+                //            if (RandomStatus(flamableNeighbours))
+                //            {
+                //                Debug.Log("Randomly set inflamable cell to flamable");
+                //                newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
+                //            }
+                //            else
+                //            {
+                //                Debug.Log("Stay inflamable");
+                //                newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
+                //            }
+                //            stepsPassed++;
+                //        }
+                //        else if (_map[j, i] == (int)EInternalStates.E_BURNT)
+                //        {
+                //            Debug.Log("Stay burnt");
+                //            newMap[j, i] = (int)EInternalStates.E_BURNT;
+                //            stepsPassed++;
+                //        }
+                //        else
+                //        {
+                //            Debug.Log("Cell invalid");
+                //            newMap[j, i] = (int)EInternalStates.E_INVALID;
+                //            stepsPassed++;
+                //        }
+                //    }
+                #endregion
             }
         }
-        UpdateMap(newMap, newHeight, newWidth);
+        UpdateMap(newMap, newWidth, newHeight);
         return newMap;
     }
 
@@ -372,11 +424,54 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_map">the map which neighbourcount is wished to be determinated</param>
     /// <param name="_posOnMapX"></param>
     /// <param name="_posOnMapY"></param>
-    private void GetAllCurrentNeighbours(int[,] _map, int _posOnMapX, int _posOnMapY)
+    //private void GetAllCurrentNeighbours(int[,] _map, int _posOnMapX, int _posOnMapY)
+    //{
+    //    int mapWidth = _map.GetLength(0);
+    //    int mapHeight = _map.GetLength(1);
+
+    //    for (int i = _posOnMapY - 1; i <= _posOnMapY + 1; i++)
+    //    {
+    //        for (int j = _posOnMapX - 1; j <= _posOnMapX + 1; j++)
+    //        {
+    //            //origin -> not a neighbour
+    //            if (i == _posOnMapY && j == _posOnMapX)
+    //            {
+    //                continue;
+    //            }
+    //            // check if position on map
+    //            if (i >= 0 && i < mapHeight && j >= 0 && j < mapWidth)
+    //            {
+    //                //if flamable
+    //                if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
+    //                {
+    //                    flamableNeighbours++;
+    //                }else if(_map[j, i] == (int)EInternalStates.E_INFLAMABLE)
+    //                {
+    //                    inflamableNeighbours++;
+    //                }else if(_map[j, i] == (int)EInternalStates.E_BURNING)
+    //                {
+    //                    burningNeighbours++;
+    //                }else if(_map[j, i] == (int)EInternalStates.E_BURNT)
+    //                {
+    //                    burntNeighbours++;
+    //                }
+    //            }
+    //        }
+    //    }
+    //    //Debug.Log($"inflamable neighbours: {inflamableNeighbours} flamable neighbours: {flamableNeighbours} burning neighbours: {burningNeighbours} burnt neighbours: {burntNeighbours}");
+    //}
+
+    /// <summary>
+    /// Returns all currently burning neighbours
+    /// </summary>
+    /// <param name="_map"> current map </param>
+    /// <param name="_posOnMapX">posX on map</param>
+    /// <param name="_posOnMapY">posY on map</param>
+    private int ReturnAllBurningNeighbours(int[,] _map, int _posOnMapX, int _posOnMapY)
     {
         int mapWidth = _map.GetLength(0);
         int mapHeight = _map.GetLength(1);
-
+        int currentBurningNeighbours = 0;
         for (int i = _posOnMapY - 1; i <= _posOnMapY + 1; i++)
         {
             for (int j = _posOnMapX - 1; j <= _posOnMapX + 1; j++)
@@ -389,27 +484,52 @@ public class CellularAutomata : MonoBehaviour
                 // check if position on map
                 if (i >= 0 && i < mapHeight && j >= 0 && j < mapWidth)
                 {
-                    //if flamable
-                    if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
+                    //if burning
+                    if (_map[j, i] == (int)EInternalStates.E_BURNING)
                     {
-                        flamableNeighbours++;
-                    }else if(_map[j, i] == (int)EInternalStates.E_INFLAMABLE)
-                    {
-                        inflamableNeighbours++;
-                    }else if(_map[j, i] == (int)EInternalStates.E_BURNING)
-                    {
-                        burningNeighbours++;
-                    }else if(_map[j, i] == (int)EInternalStates.E_BURNT)
-                    {
-                        burntNeighbours++;
+                        currentBurningNeighbours++;
                     }
                 }
             }
         }
-        //Debug.Log($"flamable neighbours: {neighbourCount}");
+        Debug.Log("burning neighbours: " + currentBurningNeighbours);
+        return currentBurningNeighbours;
     }
 
-
+    /// <summary>
+    /// Returns all currently burning neighbours
+    /// </summary>
+    /// <param name="_map"> current map </param>
+    /// <param name="_posOnMapX">posX on map</param>
+    /// <param name="_posOnMapY">posY on map</param>
+    private int ReturnAllBurntNeighbours(int[,] _map, int _posOnMapX, int _posOnMapY)
+    {
+        int mapWidth = _map.GetLength(0);
+        int mapHeight = _map.GetLength(1);
+        int currentBurntNeighbours = 0;
+        for (int i = _posOnMapY - 1; i <= _posOnMapY + 1; i++)
+        {
+            for (int j = _posOnMapX - 1; j <= _posOnMapX + 1; j++)
+            {
+                //origin -> not a neighbour
+                if (i == _posOnMapY && j == _posOnMapX)
+                {
+                    continue;
+                }
+                // check if position on map
+                if (i >= 0 && i < mapHeight && j >= 0 && j < mapWidth)
+                {
+                    //if burning
+                    if (_map[j, i] == (int)EInternalStates.E_BURNT)
+                    {
+                        currentBurntNeighbours++;
+                    }
+                }
+            }
+        }
+        Debug.Log("burnt neighbours: " + currentBurntNeighbours);
+        return currentBurntNeighbours;
+    }
 
     /// <summary>
     /// Updates the map after each step of the algorithm or when a cell's state changed
@@ -417,10 +537,11 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_map">the map to be updated</param>
     /// <param name="_mapHeight">the map's height</param>
     /// <param name="_mapWidth">the map's width</param>
-    private void UpdateMap(int[,] _map, int _mapHeight, int _mapWidth)
+    private void UpdateMap(int[,] _map, int _mapWidth, int _mapHeight)
     {
         int textGOsCounter = 0;
         int textGOsMaxCounter = allTextGOs.Count;
+        //Debug.Log($" intmap width: {_mapWidth} height: {_mapHeight}  |  width: {allCells.GetLength(0)} cell height: {allCells.GetLength(1)}");
         for (int i = 0; i < _mapHeight; i++)
         {
             for (int j = 0; j < _mapWidth; j++)
@@ -474,15 +595,15 @@ public class CellularAutomata : MonoBehaviour
     /// <param name="_higherExcl">Exclusive upper number</param>
     /// <returns>random number in range</returns>
 
-    private bool RandomStatus(int _neighbourCount)
-    {
-        float probability = _neighbourCount / 7;
-        if (probability >= 1)
-        {
-            return true;
-        }
-        else return false;
-    }
+    //private bool RandomStatus(int _neighbourCount)
+    //{
+    //    float probability = _neighbourCount / 7;
+    //    if (probability >= 1)
+    //    {
+    //        return true;
+    //    }
+    //    else return false;
+    //}
 
     private void CameraZoom()
     {
