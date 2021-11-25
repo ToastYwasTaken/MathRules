@@ -50,7 +50,8 @@ public class Cell : MonoBehaviour
     private bool flamable;
     private bool burning;   
     private bool burnt;
-    
+    private bool switched = false;
+
     [SerializeField]
     public EInternalStates state;
 
@@ -61,11 +62,10 @@ public class Cell : MonoBehaviour
 
     private void OnMouseOver()
     {
-        bool switched = false;
         //Set fire
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) && !switched)
         {
-            if (!burning && flamable)
+            if (flamable)
             {
                 Debug.Log("Setting fire");
                 burning = true;
@@ -73,18 +73,11 @@ public class Cell : MonoBehaviour
                 state = EInternalStates.E_BURNING;
                 switched = true;
             }
-            else if (burning)
-            {
-                Debug.Log("Remove fire");
-                burning = false;
-                burnt = true;
-                state = EInternalStates.E_BURNT;
-                switched = true;
-            }
         }
         if (switched)
         {
             callback(idxInArray, inflamable, flamable, burning, burnt);
+            switched = false;
         }
 
     }
@@ -133,7 +126,7 @@ public class Cell : MonoBehaviour
     /// <param name="_material"></param>
     private void SetMaterial(Material _material)
     {
-        Debug.Log(_material);
+        //Debug.Log(_material);
         rend.material = _material;
     }
 

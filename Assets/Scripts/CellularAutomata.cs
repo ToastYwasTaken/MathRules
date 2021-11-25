@@ -258,7 +258,7 @@ public class CellularAutomata : MonoBehaviour
                     spawnedCells[j, i] = cellGO.GetComponent<Cell>();
                     spawnedCells[j, i].AssignCell(this, materialInvalid, materialInflamable, materialFlamable, materialBurning, materialBurnt, seedIntForCells, j, i, OnCellChanged, map[j, i] == (int)EInternalStates.E_INFLAMABLE, map[j, i] == (int)EInternalStates.E_FLAMABLE, map[j, i] == (int)EInternalStates.E_BURNING, map[j, i] == (int)EInternalStates.E_BURNT);
                     //Assign / spawn text
-                    Debug.Log($"Cell[{j}|{i}] : {spawnedCells[j, i].state}");
+                    //Debug.Log($"Cell[{j}|{i}] : {spawnedCells[j, i].state}");
                     textMesh.text = ((int)(spawnedCells[j, i].state)).ToString();
                     //save text GOs
                     allTextGOs.Add(textGO);
@@ -303,10 +303,11 @@ public class CellularAutomata : MonoBehaviour
                 //Get burning neighbours 
                 burningNeighbours = ReturnAllBurningNeighbours(_map, j, i);
                 burntNeighbours = ReturnAllBurntNeighbours(_map, j, i);
-                Debug.Log($"steps passed to ignite: {stepsPassedToIgnite} steps passed to burn out: {stepsPassedToBurnOut}");
+                //Debug.Log($"steps passed to ignite: {stepsPassedToIgnite} steps passed to burn out: {stepsPassedToBurnOut}");
                 //Rule 1: if any neighbour is burning & this is flamable -> set this on fire after x steps
                 if (burningNeighbours >= 1 && _map[j, i] == (int)EInternalStates.E_FLAMABLE)
                 {
+                    Debug.Log("Applying rule 1");
                     //Switch cell to burning
                     if (stepsPassedToIgnite > switchToBurningAfterXsteps)
                     {
@@ -320,14 +321,16 @@ public class CellularAutomata : MonoBehaviour
                         stepsPassedToIgnite++;
                     }
                 }
-                //Rule 2: if more than 3 neighbours burning & this is flamable -> set this on fire
-                else if (burningNeighbours > 3 && _map[j, i] == (int)EInternalStates.E_FLAMABLE)
+                //Rule 2: if more than 3 neighbours burning or burnt & this is flamable -> set this on fire
+                else if (burningNeighbours + burntNeighbours > 3 && _map[j, i] == (int)EInternalStates.E_FLAMABLE)
                 {
+                    Debug.Log("Applying rule 2");
                     newMap[j, i] = (int)EInternalStates.E_BURNING;
                 }
                 //Rule3: if more than 2 neighbours are burning & this is burning -> switch to burnt after x steps
                 else if (burningNeighbours >=3 && _map[j, i] == (int)EInternalStates.E_BURNING)
                 {
+                    Debug.Log("Applying rule 3");
                     if (stepsPassedToBurnOut > switchToBurntAfterXsteps)
                     {
                         newMap[j, i] = (int)EInternalStates.E_BURNT;
@@ -343,75 +346,15 @@ public class CellularAutomata : MonoBehaviour
                  //Rule4: if more than 1 neighbour are already burnt & this is burning -> switch to burnt
                 else if (burntNeighbours >= 2 && _map[j, i] == (int)EInternalStates.E_BURNING)
                 {
+                    Debug.Log("Applying rule 4");
                     newMap[j, i] = (int)EInternalStates.E_BURNT;
                 }
-                else 
-                //Keep previous state
+                else
+                {
+                    //Keep previous state
+                    Debug.Log("cell keeps its old state");
                     newMap[j, i] = _map[j, i];
-                #region oldrules
-                //    GetAllCurrentNeighbours(_map, j, i);
-                //    if (flamableNeighbours >= 5)
-                //    {
-                //        if (_map[j, i] == (int)EInternalStates.E_BURNING)
-                //        {
-                //            Debug.Log("Cell burning");
-                //            //switch to burnt after burning for x steps
-                //            if (stepsPassed >= switchStatusAfterSteps)
-                //            {
-                //                Debug.Log("Setting cell burnt");
-                //                newMap[j, i] = (int)EInternalStates.E_BURNT;
-                //            }
-                //            else
-                //            {
-                //                Debug.Log("Cell stays burning");
-                //                newMap[j, i] = (int)EInternalStates.E_BURNING;
-                //            }
-                //        }
-                //        else if (_map[j, i] == (int)EInternalStates.E_FLAMABLE)
-                //        {
-                //            Debug.Log("Cell flamable");
-                //            //randomly set fire
-                //            if (RandomStatus(flamableNeighbours))
-                //            {
-                //                Debug.Log("Randomly set flamable cell on fire");
-                //                newMap[j, i] = (int)EInternalStates.E_BURNING;
-                //            }
-                //            else
-                //            {
-                //                Debug.Log("Stay flamable");
-                //                newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
-                //            }
-                //            stepsPassed++;
-                //        }
-                //        else if (_map[j, i] == (int)EInternalStates.E_INFLAMABLE)
-                //        {
-                //            Debug.Log("Cell inflamable");
-                //            if (RandomStatus(flamableNeighbours))
-                //            {
-                //                Debug.Log("Randomly set inflamable cell to flamable");
-                //                newMap[j, i] = (int)EInternalStates.E_FLAMABLE;
-                //            }
-                //            else
-                //            {
-                //                Debug.Log("Stay inflamable");
-                //                newMap[j, i] = (int)EInternalStates.E_INFLAMABLE;
-                //            }
-                //            stepsPassed++;
-                //        }
-                //        else if (_map[j, i] == (int)EInternalStates.E_BURNT)
-                //        {
-                //            Debug.Log("Stay burnt");
-                //            newMap[j, i] = (int)EInternalStates.E_BURNT;
-                //            stepsPassed++;
-                //        }
-                //        else
-                //        {
-                //            Debug.Log("Cell invalid");
-                //            newMap[j, i] = (int)EInternalStates.E_INVALID;
-                //            stepsPassed++;
-                //        }
-                //    }
-                #endregion
+                }
             }
         }
         UpdateMap(newMap, newWidth, newHeight);
@@ -492,7 +435,7 @@ public class CellularAutomata : MonoBehaviour
                 }
             }
         }
-        Debug.Log("burning neighbours: " + currentBurningNeighbours);
+        //Debug.Log("burning neighbours: " + currentBurningNeighbours);
         return currentBurningNeighbours;
     }
 
@@ -527,7 +470,7 @@ public class CellularAutomata : MonoBehaviour
                 }
             }
         }
-        Debug.Log("burnt neighbours: " + currentBurntNeighbours);
+        //Debug.Log("burnt neighbours: " + currentBurntNeighbours);
         return currentBurntNeighbours;
     }
 
